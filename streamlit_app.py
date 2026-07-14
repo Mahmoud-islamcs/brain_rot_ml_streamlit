@@ -13,10 +13,8 @@ from utils import (
     align_columns,
     STAGE_ORDER,
     STAGE_COLORS,
-    STAGE_ICONS,
-    STAGE_LABELS_AR,
-    STAGE_RECOMMENDATIONS_AR,
 )
+from translations import t, TRANSLATIONS, STAGE_LABELS, STAGE_RECOMMENDATIONS
 
 # PAGE CONFIG
 st.set_page_config(
@@ -25,6 +23,17 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# LANGUAGE STATE
+if "lang" not in st.session_state:
+    st.session_state.lang = "en"
+
+
+def toggle_language():
+    st.session_state.lang = "arz" if st.session_state.lang == "en" else "en"
+
+
+lang = st.session_state.lang
 
 # GLASSMORPHISM DARK THEME CSS
 st.markdown(
@@ -118,6 +127,35 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# RTL SUPPORT (applied only when Arabic is active)
+if lang == "arz":
+    st.markdown(
+        """
+        <style>
+        .main .block-container {
+            direction: rtl;
+            text-align: right;
+        }
+        section[data-testid="stSidebar"] {
+            direction: rtl;
+            text-align: right;
+        }
+        .glass-card, .result-card, .recommendation-box {
+            direction: rtl;
+            text-align: right;
+        }
+        .recommendation-box {
+            border-left: none;
+            border-right: 4px solid #7C5CFC;
+        }
+        div[data-testid="stMetricValue"], .metric-card {
+            direction: rtl;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 # CACHED LOADERS
 @st.cache_data
@@ -142,78 +180,91 @@ best_model_name = metadata["best_model_name"]
 # SIDEBAR NAVIGATION
 with st.sidebar:
     st.markdown(
-        """
+        f"""
         <div style="text-align:center;">
-            <h2 style="margin-bottom:0;">BrainRot Analytics</h2>
+            <h2 style="margin-bottom:0;">{t('sidebar_title', lang)}</h2>
             <p style="margin-top:-4px; font-size:0.9rem; color:#9CA3AF;">
-                AI-Powered Behavioral Intelligence Platform
+                {t('sidebar_subtitle', lang)}
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    if st.button(t("lang_toggle_button", lang), use_container_width=True, key="btn_lang_toggle"):
+        toggle_language()
+        st.rerun()
+
     st.markdown("<hr style='border-color: rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
 
     if "page" not in st.session_state:
         st.session_state.page = "Predict"
 
-    if st.button("Predict", use_container_width=True):
+    if st.button(t("nav_predict", lang), use_container_width=True):
         st.session_state.page = "Predict"
 
-    if st.button("Insights", use_container_width=True):
+    if st.button(t("nav_insights", lang), use_container_width=True):
         st.session_state.page = "Insights"
 
-    if st.button("About", use_container_width=True):
+    if st.button(t("nav_about", lang), use_container_width=True):
         st.session_state.page = "About"
 
     page = st.session_state.page
 
     st.markdown("<hr style='border-color: rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
     with st.container():
-        st.write(f"**Model:** {best_model_name}")
-        st.write(f"**Records:** {len(df):,}")
+        st.write(f"**{t('sidebar_model_label', lang)}:** {best_model_name}")
+        st.write(f"**{t('sidebar_records_label', lang)}:** {len(df):,}")
     st.markdown("<hr style='border-color: rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
-    st.markdown("Made by [Mahmoud Islam](https://www.linkedin.com/in/mahmoud-islam-analytics/)", unsafe_allow_html=True)
+    st.markdown(t("made_by", lang), unsafe_allow_html=True)
 
 
 # PAGE 1: PREDICT
 if page == "Predict":
-    st.title("Mental Health & Wellbeing Predictor")
-    st.markdown(
-        "Enter your daily habits below to predict your current digital distraction "
-        "stage (Brain Rot Stage), based on a machine learning model trained on 5,000 "
-        "Egyptian student records."
-    )
+    st.title(t("predict_title", lang))
+    st.markdown(t("predict_intro", lang))
+
+    device_options = [
+        t("device_smartphone", lang),
+        t("device_tablet", lang),
+        t("device_pc", lang),
+    ]
+    device_values = ["Smartphone", "Tablet", "PC"]
 
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
-        reels = st.slider("Daily Short-Form Videos Watched (Reels/Shorts/TikTok)", 0, 270, 60)
-        coffee = st.slider("Daily Caffeinated Drinks Consumed", 0, 10, 2)
-        device = st.selectbox("Primary Device Used", ["Smartphone", "Tablet", "PC"])
-        q_col, a_col = st.columns([2, 1])  
+        reels = st.slider(t("label_reels", lang), 0, 270, 60)
+        coffee = st.slider(t("label_coffee", lang), 0, 10, 2)
+        device_display = st.selectbox(t("label_device", lang), device_options)
+        device = device_values[device_options.index(device_display)]
+        q_col, a_col = st.columns([2, 1])
         with q_col:
-            st.write("") 
-            st.write("Do you use your phone after midnight?")
+            st.write("")
+            st.write(t("label_late_night_question", lang))
         with a_col:
-            late_night = st.radio("", ["Yes", "No"], horizontal=True, label_visibility="collapsed")
+            late_night_options = [t("label_yes", lang), t("label_no", lang)]
+            late_night_display = st.radio(
+                "", late_night_options, horizontal=True, label_visibility="collapsed"
+            )
+            late_night = "Yes" if late_night_display == t("label_yes", lang) else "No"
     with col2:
-        study_hours = st.slider("Daily Effective Study/Productivity Hours", 0.0, 11.0, 4.0, step=0.5)
-        focus_sessions = st.slider("Daily Deep Focus Sessions (Uninterrupted)", 0, 11, 4)
-        age = st.number_input("Age", min_value=8, max_value=25, value=20, step=1)
-        
+        study_hours = st.slider(t("label_study_hours", lang), 0.0, 11.0, 4.0, step=0.5)
+        focus_sessions = st.slider(t("label_focus_sessions", lang), 0, 11, 4)
+        age = st.number_input(t("label_age", lang), min_value=8, max_value=25, value=20, step=1)
+
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     predict_clicked = st.button(
-        "Execute AI Prediction", 
-        type="primary", 
+        t("predict_button", lang),
+        type="primary",
         use_container_width=True,
         key="btn_predict_main"
     )
 
     if predict_clicked:
-        with st.spinner("Analyzing your data..."):
+        with st.spinner(t("spinner_text", lang)):
             time.sleep(1.5) 
             input_df = pd.DataFrame(
                 [
@@ -241,30 +292,33 @@ if page == "Predict":
             pred_stage = STAGE_ORDER[pred_int]
 
             color = STAGE_COLORS[pred_stage]
-            icon = STAGE_ICONS[pred_stage]
-            label_ar = STAGE_LABELS_AR[pred_stage]
-            recommendation = STAGE_RECOMMENDATIONS_AR[pred_stage]
+            stage_label = STAGE_LABELS[lang][pred_stage]
+            recommendation = STAGE_RECOMMENDATIONS[lang][pred_stage]
 
         st.markdown(
             f"""
             <div class='result-card' style='background: linear-gradient(135deg, {color}22, {color}08); border-color:{color}55;'>
-                <div class='result-title'>Current Digital Distraction Stage</div>
-                <div class='result-stage' style='color:{color};'>{icon} {label_ar}</div>
+                <div class='result-title'>{t('result_title', lang)}</div>
+                <div class='result-stage' style='color:{color};'>{stage_label}</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
         st.markdown(
-            f"<div class='recommendation-box'><b>Recommendation:</b> {recommendation}</div>",
+            f"<div class='recommendation-box'><b>{t('recommendation_label', lang)}:</b> {recommendation}</div>",
             unsafe_allow_html=True,
         )
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### Prediction Probabilities")
+        st.markdown(f"### {t('proba_title', lang)}")
 
         proba_df = pd.DataFrame(
-            {"Stage": STAGE_ORDER, "Probability": proba}
+            {
+                "StageKey": STAGE_ORDER,
+                "Stage": [STAGE_LABELS[lang][s] for s in STAGE_ORDER],
+                "Probability": proba,
+            }
         ).sort_values("Probability", ascending=True)
 
         fig = go.Figure(
@@ -272,7 +326,7 @@ if page == "Predict":
                 x=proba_df["Probability"],
                 y=proba_df["Stage"],
                 orientation="h",
-                marker_color=[STAGE_COLORS[s] for s in proba_df["Stage"]],
+                marker_color=[STAGE_COLORS[s] for s in proba_df["StageKey"]],
                 text=[f"{p:.1%}" for p in proba_df["Probability"]],
                 textposition="outside",
             )
@@ -291,8 +345,8 @@ if page == "Predict":
 
 # PAGE 3: INSIGHTS
 elif page == "Insights":
-    st.title("Model Insights")
-    st.markdown(f"Performance details and interpretation of the winning model: **{best_model_name}**")
+    st.title(t("insights_title", lang))
+    st.markdown(f"{t('insights_subtitle', lang)} **{best_model_name}**")
 
     dark_layout = dict(
         plot_bgcolor="rgba(0,0,0,0)",
@@ -303,100 +357,82 @@ elif page == "Insights":
 
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("#### Feature Importance")
+        st.markdown(f"#### {t('feature_importance_title', lang)}")
         try:
             fi_df = pd.read_csv("model/feature_importance.csv")
             fig = px.bar(fi_df, x="importance", y="feature", orientation="h",color="importance", color_continuous_scale="Purples")
             fig.update_layout(**dark_layout, yaxis=dict(categoryorder="total ascending"))
             st.plotly_chart(fig, use_container_width=True)
         except FileNotFoundError:
-            st.info("Run train_model.ipynb first to generate this chart.")
+            st.info(t("feature_importance_missing", lang))
 
     with col2:
-        st.markdown("#### Confusion Matrix")
+        st.markdown(f"#### {t('confusion_matrix_title', lang)}")
         try:
             st.image("model/confusion_matrix.png", use_container_width=True)
         except Exception:
-            st.info("Run train_model.ipynb first to generate this image.")
+            st.info(t("confusion_matrix_missing", lang))
 
-    st.markdown("#### Classification Report")
+    st.markdown(f"#### {t('classification_report_title', lang)}")
     try:
         with open("model/classification_report.txt") as f:
             st.code(f.read(), language="text")
     except FileNotFoundError:
-        st.info("No saved report found. Run train_model.ipynb first.")
+        st.info(t("classification_report_missing", lang))
 
-    st.markdown("#### Correlation Analysis")
+    st.markdown(f"#### {t('correlation_title', lang)}")
     numeric_df = df.select_dtypes(include=[np.number]).drop(
         columns=["ActivityID", "UserKey", "DateKey", "StateKey", "HabitKey"], errors="ignore"
     )
     corr = numeric_df.corr()
-    fig = px.imshow(corr, color_continuous_scale="RdBu_r", zmin=-1, zmax=1, aspect="auto",title="Correlation Heatmap")
+    fig = px.imshow(corr, color_continuous_scale="RdBu_r", zmin=-1, zmax=1, aspect="auto", title=t("correlation_heatmap_title", lang))
     fig.update_layout(**dark_layout, height=550)
     st.plotly_chart(fig, use_container_width=True)
 
 
 # PAGE 4: ABOUT
 else:
-    st.title("About Brain Rot Analytics")
+    st.title(t("about_title", lang))
+
+    benefits_list = TRANSLATIONS.get(lang, TRANSLATIONS["en"]).get("about_benefits", [])
+    benefits_html = "".join(f"<li>{item}</li>" for item in benefits_list)
+
     st.markdown(
-        """
+        f"""
         <div class='glass-card'>
-        
-        <h3>About the Project</h3>
+
+        <h3>{t('about_project_heading', lang)}</h3>
         <p style='color:#CBD5E1; line-height:1.9;'>
-        <b>"Brain Rot Analytics"</b> is a comprehensive Data Science and Machine Learning graduation project designed to analyze digital wellbeing. 
-        It studies the profound relationship between daily behavioral habits—specifically short-form video consumption—and student productivity. 
-        The project delivers a predictive model that successfully classifies a student's digital distraction level into one of four distinct stages: 
-        <span style='color:#10B981; font-weight:bold;'>Healthy</span>, 
-        <span style='color:#3B82F6; font-weight:bold;'>Casual</span>, 
-        <span style='color:#F59E0B; font-weight:bold;'>Advanced</span>, or 
-        <span style='color:#EF4444; font-weight:bold;'>Critical</span>.
+        {t('about_project_text', lang)}
         </p>
 
-        <h3>About the Dataset & Preprocessing</h3>
+        <h3>{t('about_dataset_heading', lang)}</h3>
         <p style='color:#CBD5E1; line-height:1.9;'>
-        The model is built on a comprehensive dataset containing <b>5,000 rows and 30 columns</b>. 
-        To preserve full sample size and statistical integrity, missing values found across 51 rows (in features like Age, Region, and Device Type) 
-        were meticulously imputed using median and mode strategies rather than being discarded.
+        {t('about_dataset_text', lang)}
         </p>
 
-        <h3>Key Project Benefits</h3>
+        <h3>{t('about_benefits_heading', lang)}</h3>
         <ul style='color:#CBD5E1; line-height:1.9; padding-left: 20px;'>
-            <li>Detects early indicators of digital distraction before escalating to critical stages.</li>
-            <li>Provides personalized, actionable recommendations to mitigate screen-time harms.</li>
-            <li>Empowers awareness campaigns with robust, data-driven insights into modern digital habits.</li>
-            <li>Pinpoints specific destructive behaviors (e.g., late-night usage, short-video loops) that heavily impair cognitive focus.</li>
+            {benefits_html}
         </ul>
 
-        <h3>How to Explain the Model to the Committee</h3>
+        <h3>{t('about_committee_heading', lang)}</h3>
         <p style='color:#CBD5E1; line-height:1.9;'>
-        <b>1) Machine Learning Pipeline & Models Evaluated:</b><br>
-        We implemented a comparative benchmark across three diverse algorithms: <b>Logistic Regression</b> (as our baseline model), 
-        <b>Random Forest</b>, and <b>XGBoost</b>. Every model was optimized utilizing <code>RandomizedSearchCV</code> for hyperparameter tuning, 
-        and strict class balancing was enforced via <code>class_weight='balanced'</code> alongside a stratified train/test split to address the 
-        highly imbalanced class distribution (Healthy: 61%, Critical: 18%, Advanced: 12.5%, Casual: 8.5%).
+        <b>{t('about_committee_p1_heading', lang)}</b><br>
+        {t('about_committee_p1', lang)}
         <br><br>
-        <b>2) Rigorous Metric Selection & Winning Model:</b><br>
-        The <b>Random Forest Classifier</b> emerged as the champion model, achieving an outstanding <b>Macro F1-score of 0.903</b> and an <b>Overall Accuracy of 94.5%</b>. 
-        We explicitly relied on the Macro F1-score as our primary evaluation metric rather than accuracy alone, ensuring that the model performs 
-        equally well on the minority classes (Casual and Advanced) and is robust against data imbalance.
+        <b>{t('about_committee_p2_heading', lang)}</b><br>
+        {t('about_committee_p2', lang)}
         <br><br>
-        <b>3) Top Feature Importances:</b><br>
-        The model's decisions are highly transparent and logical. Inline Feature Importance analysis indicates that the top 3 predictive drivers are: 
-        <code>Total_Reels_Watched</code> &rarr; <code>Focus_Sessions_Count</code> &rarr; <code>Study_Hours</code>. 
-        This perfectly validates our core hypothesis regarding digital distraction and academic focus.
+        <b>{t('about_committee_p3_heading', lang)}</b><br>
+        {t('about_committee_p3', lang)}
         </p>
 
-        <h3>Prevention of Data Leakage</h3>
+        <h3>{t('about_leakage_heading', lang)}</h3>
         <p style='color:#CBD5E1; line-height:1.9;'>
-        To guarantee genuine generalization, strict feature selection was conducted. Only <b>7 behavioral features</b> were allowed into training 
-        (<i>Age, Total_Reels_Watched, Coffee_Consumed_Per_Day, Focus_Sessions_Count, Study_Hours, Is_Late_Night, Device_Type</i>). 
-        Target-derived or highly correlated columns—such as <code>Brainrot_Exposure_Score</code>, <code>Wellbeing_Score</code>, <code>Attention_Span_Level</code>, 
-        <code>Aura_Color_Code</code>, <code>Coffee_Level</code>, and <code>Smoking_Status</code>—were <b>deliberately excluded</b> from the training phase. 
-        This prevents mathematical data leakage, ensuring that the dashboard's performance is realistic and not artificially inflated.
+        {t('about_leakage_text', lang)}
         </p>
-        
+
         </div>
         """,
         unsafe_allow_html=True,
