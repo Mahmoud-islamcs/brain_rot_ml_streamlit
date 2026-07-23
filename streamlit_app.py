@@ -3,12 +3,14 @@ import joblib
 import pandas as pd
 import streamlit as st
 
-from utils import load_raw_data, clean_data
+from utils import load_raw_data, clean_data, train_candidate_models
 from views.predict import render_predict_page
 from views.explorer import render_explorer_page
 from views.insights import render_insights_page
+from views.geospatial import render_geospatial_page
 from views.batch import render_batch_page
 from views.about import render_about_page
+from views.sidebar import render_sidebar
 
 # PAGE CONFIG
 st.set_page_config(
@@ -118,6 +120,21 @@ st.markdown(
     .stSlider, .stNumberInput, .stSelectbox, .stRadio, .stMultiSelect {
         color: #F5F7FA;
     }
+
+    /* Tabs styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: rgba(255,255,255,0.04);
+        border-radius: 8px 8px 0 0;
+        color: #94A3B8;
+        padding: 10px 16px;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: rgba(124, 92, 252, 0.2) !important;
+        color: #FFFFFF !important;
+    }
     
     /* Footer cleanup */
     footer {visibility: hidden;}
@@ -141,6 +158,14 @@ def get_model_artifacts():
     metadata = joblib.load("model/metadata.pkl")
     return model, scaler, metadata
 
+@st.cache_resource
+def get_candidate_models_cache(_df, trained_columns, _main_model, uses_scaled):
+    models = train_candidate_models(_df, trained_columns)
+    models["trained_columns"] = trained_columns
+    models["main_model"] = _main_model
+    models["uses_scaled"] = uses_scaled
+    return models
+
 
 df = get_data()
 model, scaler, metadata = get_model_artifacts()
@@ -148,46 +173,11 @@ trained_columns = metadata["trained_columns"]
 uses_scaled = metadata["uses_scaled"]
 best_model_name = metadata["best_model_name"]
 
+candidate_models_dict = get_candidate_models_cache(df, trained_columns, model, uses_scaled)
 
-# SIDEBAR NAVIGATION
-with st.sidebar:
-    st.markdown(
-        """
-        <div style="text-align:center; padding: 10px 0;">
-            <h2 style="margin-bottom:0; color:#FFFFFF;">BrainRot Analytics</h2>
-            <p style="margin-top:2px; font-size:0.85rem; color:#9CA3AF;">
-                AI-Powered Behavioral Intelligence Platform
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.markdown("<hr style='border-color: rgba(255,255,255,0.1); margin: 10px 0;'>", unsafe_allow_html=True)
 
-    if "page" not in st.session_state:
-        st.session_state.page = "Predict"
-
-    pages_list = [
-        ("Predict", "Predict"),
-        ("Dataset Explorer", "Dataset Explorer"),
-        ("Insights", "Insights"),
-        ("Batch Prediction", "Batch Prediction"),
-        ("About", "About"),
-    ]
-
-    for label, page_key in pages_list:
-        is_active = (st.session_state.page == page_key)
-        btn_type = "primary" if is_active else "secondary"
-        if st.button(label, use_container_width=True, type=btn_type, key=f"nav_{page_key}"):
-            st.session_state.page = page_key
-
-    page = st.session_state.page
-
-    st.markdown("<hr style='border-color: rgba(255,255,255,0.1); margin: 15px 0;'>", unsafe_allow_html=True)
-    st.write(f"**Model:** {best_model_name}")
-    st.write(f"**Dataset Size:** {len(df):,} records")
-    st.markdown("<hr style='border-color: rgba(255,255,255,0.1); margin: 15px 0;'>", unsafe_allow_html=True)
-    st.markdown("Developed by [Mahmoud Islam](https://www.linkedin.com/in/mahmoud-islam-analytics/)", unsafe_allow_html=True)
+# RENDER EXECUTIVE SIDEBAR NAVIGATION
+page = render_sidebar(df, best_model_name)
 
 
 # ROUTING TO MODULAR PAGES
@@ -198,7 +188,10 @@ elif page == "Dataset Explorer":
     render_explorer_page(df)
 
 elif page == "Insights":
-    render_insights_page(df, best_model_name)
+    render_insights_page(df, best_model_name, candidate_models_dict)
+
+elif page == "Geospatial Analysis":
+    render_geospatial_page(df)
 
 elif page == "Batch Prediction":
     render_batch_page(model, scaler, trained_columns, uses_scaled)
