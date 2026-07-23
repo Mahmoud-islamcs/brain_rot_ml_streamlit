@@ -2,6 +2,11 @@ import pandas as pd
 import streamlit as st
 
 
+def reset_global_filters():
+    st.session_state.global_age_group_filter = "All"
+    st.session_state.global_device_type_filter = "All"
+
+
 def render_sidebar(df: pd.DataFrame, best_model_name: str) -> str:
     """Renders the executive sidebar navigation, status badges, global controls, and branding footer."""
     with st.sidebar:
@@ -103,10 +108,12 @@ def render_sidebar(df: pd.DataFrame, best_model_name: str) -> str:
                 key="global_device_type_filter",
             )
 
-            if st.button("Reset Global Filters", use_container_width=True, key="reset_global_filters_btn"):
-                st.session_state.global_age_group_filter = "All"
-                st.session_state.global_device_type_filter = "All"
-                st.rerun()
+            st.button(
+                "Reset Global Filters",
+                use_container_width=True,
+                key="reset_global_filters_btn",
+                on_click=reset_global_filters,
+            )
 
         st.markdown("<hr style='border-color: rgba(255,255,255,0.08); margin: 14px 0;'>", unsafe_allow_html=True)
 
