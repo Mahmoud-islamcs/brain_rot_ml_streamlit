@@ -3,7 +3,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from utils import get_dark_chart_layout, STAGE_COLORS, STAGE_ORDER
+from app_utils import get_dark_chart_layout, STAGE_COLORS, STAGE_ORDER
 
 # Coordinates mapping for Egyptian Governorates and Major Cities
 EGYPT_REGION_COORDINATES = {

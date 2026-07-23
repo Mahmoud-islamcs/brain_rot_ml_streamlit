@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from utils import get_dark_chart_layout, STAGE_COLORS, STAGE_ORDER
+from app_utils import get_dark_chart_layout, STAGE_COLORS, STAGE_ORDER
 
 
 def render_explorer_page(df: pd.DataFrame):

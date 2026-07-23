@@ -2,7 +2,7 @@ import time
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from utils import (
+from app_utils import (
     prepare_features,
     align_columns,
     get_dark_chart_layout,

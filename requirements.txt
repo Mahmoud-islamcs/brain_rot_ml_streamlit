@@ -8,6 +8,4 @@ joblib
 imbalanced-learn
 matplotlib
 seaborn
-jupyter
-notebook
-ipykernel
+shap

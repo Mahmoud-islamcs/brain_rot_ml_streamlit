@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from utils import (
+from app_utils import (
     get_dark_chart_layout,
     train_candidate_models,
     calculate_feature_drift,

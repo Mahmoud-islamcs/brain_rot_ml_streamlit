@@ -2,7 +2,7 @@ import io
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from utils import (
+from app_utils import (
     process_batch_predictions,
     get_dark_chart_layout,
     STAGE_COLORS,

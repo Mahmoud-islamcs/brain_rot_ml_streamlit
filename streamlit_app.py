@@ -1,9 +1,13 @@
 # pyrefly: ignore [missing-import]
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import joblib
 import pandas as pd
 import streamlit as st
 
-from utils import load_raw_data, clean_data, train_candidate_models
+from app_utils import load_raw_data, clean_data, train_candidate_models
 from views.predict import render_predict_page
 from views.explorer import render_explorer_page
 from views.insights import render_insights_page

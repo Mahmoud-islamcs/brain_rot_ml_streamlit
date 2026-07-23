@@ -130,8 +130,9 @@ brain_rot_ml_streamlit/
 │   └── sidebar.py                     # Executive sidebar navigation renderer
 │
 ├── requirements.txt                   # Production Python dependencies
-├── utils.py                           # Helper utilities, clean data, & calculations
-└── streamlit_app.py                   # Main application entry point & router
+├── app_utils.py                      # Production utility functions, cleaning & calculations
+├── utils.py                          # Re-export module alias for backwards compatibility
+└── streamlit_app.py                  # Main application entry point & router
 ```
 
 ---
